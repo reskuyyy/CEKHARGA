@@ -13,15 +13,20 @@ HEADERS = {
 
 @application.route('/')
 def index():
-    return "API Proxy is Running"
+    return "Planogram API Proxy Running"
 
 @application.route('/proxy-products')
 def proxy_products():
     store_id = request.args.get('storeId', '')
+    # Kita buat fleksibel, bisa terima rak atau tidak
+    rack = request.args.get('rack', '')
+    
     if not store_id:
         return {'error': 'storeId wajib diisi'}, 400
     
-    url = f"https://app.alfastore.co.id/prd/api/cex/get_product_list/?storeId={store_id}"
+    # Menggunakan URL API yang kamu berikan
+    url = f"https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId={store_id}&rack={rack}"
+    
     try:
         resp = requests.get(url, headers=HEADERS, timeout=30)
         return Response(resp.content, status=resp.status_code,
