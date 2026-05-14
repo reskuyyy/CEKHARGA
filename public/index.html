@@ -3,298 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planogram Viewer</title>
+<title>Planogram Viewer v2</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--bg4:#222;
+  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;
   --border:#2a2a2a;--border2:#333;--text:#e8e8e8;--text2:#888;--text3:#555;
-  --accent:#ff4e1a;--accent2:#ff6b3d;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --accent:#ff4e1a;--green:#22c55e;--yellow:#f59e0b;
   --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
-  --radius:8px;--radius-lg:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
 .top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:56px;gap:12px;position:sticky;top:0;z-index:10;}
-.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
-.logo-text{font-size:15px;font-weight:600;}
-.logo-sub{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;}
 .container{max-width:1100px;margin:0 auto;padding:24px;}
-.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:16px;}
-.form-title{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px;}
 .form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;}
-.field label{display:block;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:6px;letter-spacing:.05em;}
-.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s;}
+.field label{display:block;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:6px;text-transform:uppercase;}
+.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--mono);outline:none;}
 .field input:focus{border-color:var(--accent);}
-.hint{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;}
-.btn-fetch{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:9px 24px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;height:38px;white-space:nowrap;}
-.btn-fetch:hover{background:var(--accent2);}
-.btn-fetch:disabled{background:var(--bg4);color:var(--text3);cursor:not-allowed;}
+.btn-fetch{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 24px;font-weight:600;cursor:pointer;height:38px;}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
-.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
-.stat-label{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
-.stat-val{font-size:20px;font-weight:700;color:var(--text);}
-.stat-val.accent{color:var(--accent);}
-.stat-val.green{color:var(--green);}
-.stat-val.yellow{color:var(--yellow);}
-.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
-.table-toolbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:12px;background:var(--bg3);flex-wrap:wrap;}
-.search-input{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:220px;}
-.search-input:focus{border-color:var(--accent);}
-.filter-rack{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:140px;}
-.filter-rack:focus{border-color:var(--accent);}
-.btn-export{background:transparent;border:1px solid var(--border2);border-radius:var(--radius);padding:7px 16px;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;}
-.btn-export:hover{border-color:var(--green);color:var(--green);}
-.table-scroll{overflow-x:auto;max-height:520px;overflow-y:auto;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.stat-val{font-size:20px;font-weight:700;}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.table-toolbar{display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);}
+.search-input{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--text);width:220px;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;white-space:nowrap;}
-thead th:hover{color:var(--text);}thead th.active{color:var(--accent);}
-td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
-tr:last-child td{border-bottom:none;}
-tr:hover td{background:var(--bg3);}
-td.mono{font-family:var(--mono);font-size:11px;color:var(--text2);}
-td.rack{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;}
-td.price{font-family:var(--mono);font-size:12px;color:var(--yellow);font-weight:600;}
-td.right{text-align:right;font-family:var(--mono);}
-.table-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;font-family:var(--mono);color:var(--text3);background:var(--bg3);display:flex;justify-content:space-between;}
-.state-box{padding:48px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:13px;}
-.state-box .icon{font-size:32px;margin-bottom:12px;}
-.state-error{color:var(--red);}
-.hidden{display:none!important;}
-@media(max-width:640px){
-  .form-row{grid-template-columns:1fr;}
-  .stats{grid-template-columns:repeat(2,1fr);}
-  .table-toolbar{flex-direction:column;align-items:stretch;}
-  .search-input,.filter-rack{width:100%;}
-}
+thead th{background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:10px;padding:10px 12px;text-align:left;cursor:pointer;position:sticky;top:0;}
+thead th.active{color:var(--accent);}
+td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td.rack{color:var(--accent);font-family:var(--mono);font-size:11px;}
+td.price{color:var(--yellow);font-family:var(--mono);font-weight:600;text-align:right;}
+.hidden{display:none;}
 </style>
 </head>
 <body>
 <div class="top-bar">
   <div class="logo-dot"></div>
-  <div>
-    <div class="logo-text">Planogram Viewer</div>
-    <div class="logo-sub">ALFAMART · PRODUCT INFO</div>
-  </div>
+  <div class="logo-text">Planogram Viewer <span style="font-size:10px; color:var(--text3)">API FIXED</span></div>
 </div>
 <div class="container">
   <div class="form-card">
-    <div class="form-title">// Parameter Query</div>
     <div class="form-row">
       <div class="field">
         <label>KODE TOKO</label>
-        <input type="text" id="storeId" value="N497" placeholder="contoh: N497">
+        <input type="text" id="storeId" value="N497">
       </div>
       <div class="field">
-        <label>FILTER RAK (opsional)</label>
-        <input type="text" id="filterRak" placeholder="contoh: AU1">
-        <div class="hint">* Kosongkan untuk tampil semua</div>
+        <label>RAK</label>
+        <input type="text" id="filterRak" value="AU1">
       </div>
       <button class="btn-fetch" id="fetchBtn">Tampilkan</button>
     </div>
   </div>
 
   <div id="statsEl" class="stats hidden">
-    <div class="stat-card"><div class="stat-label">Store ID</div><div class="stat-val accent" id="s-store">-</div></div>
-    <div class="stat-card"><div class="stat-label">Total Item</div><div class="stat-val" id="s-total">-</div></div>
-    <div class="stat-card"><div class="stat-label">Total Rak</div><div class="stat-val yellow" id="s-rak">-</div></div>
-    <div class="stat-card"><div class="stat-label">Total Subdept</div><div class="stat-val green" id="s-subdept">-</div></div>
+    <div class="stat-card">
+        <div style="font-size:10px;color:var(--text3)">STORE</div>
+        <div class="stat-val" id="s-store" style="color:var(--accent)">-</div>
+    </div>
+    <div class="stat-card">
+        <div style="font-size:10px;color:var(--text3)">TOTAL ITEM</div>
+        <div class="stat-val" id="s-total">-</div>
+    </div>
   </div>
 
   <div id="tableCard" class="table-card hidden">
     <div class="table-toolbar">
-      <input type="text" class="search-input" id="search" placeholder="Cari PLU / nama / barcode...">
-      <input type="text" class="filter-rack" id="filterRakTable" placeholder="Filter rak: AU1">
-      <button class="btn-export" id="exportBtn">Export Excel</button>
+      <input type="text" class="search-input" id="search" placeholder="Cari barang...">
+      <button id="exportBtn" style="background:none; border:1px solid var(--border2); color:var(--text2); cursor:pointer; padding:5px 10px; border-radius:5px">Export Excel</button>
     </div>
-    <div class="table-scroll">
+    <div style="overflow-x:auto; max-height:500px;">
       <table>
         <thead>
           <tr>
             <th onclick="sortBy('plu')" id="th-plu">PLU</th>
-            <th onclick="sortBy('descp')" id="th-descp">Nama Barang</th>
-            <th onclick="sortBy('planogram')" id="th-planogram">Planogram / Rak</th>
-            <th onclick="sortBy('barcode')" id="th-barcode">Barcode</th>
-            <th onclick="sortBy('price_sale')" id="th-price_sale">Price</th>
-            <th onclick="sortBy('subdept')" id="th-subdept" style="text-align:right">Subdept</th>
+            <th onclick="sortBy('descp')" id="th-descp">NAMA BARANG</th>
+            <th onclick="sortBy('planogram')" id="th-planogram">PLANOGRAM</th>
+            <th onclick="sortBy('barcode')" id="th-barcode">BARCODE</th>
+            <th onclick="sortBy('price')" id="th-price" style="text-align:right">PRICE</th>
+            <th style="text-align:right">SUBDEPT</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
     </div>
-    <div class="table-footer">
-      <span id="footerInfo">-</span>
-      <span id="footerRak">-</span>
-    </div>
-  </div>
-
-  <div id="stateBox" class="state-box">
-    <div class="icon">o</div>
-    <div>Masukkan kode toko lalu klik Tampilkan</div>
   </div>
 </div>
 
 <script>
-var allData = [], sortKey = 'planogram', sortDir = 1;
-
-// IDR Formatter
+let allData = [], sortKey = 'planogram', sortDir = 1;
 const formatter = new Intl.NumberFormat('id-ID');
 
-function setState(type, msg) {
-  var sb = document.getElementById('stateBox');
-  sb.classList.remove('hidden');
-  sb.className = 'state-box' + (type === 'error' ? ' state-error' : '');
-  sb.innerHTML = '<div class="icon">' + (type === 'loading' ? '...' : type === 'error' ? 'X' : 'o') + '</div><div>' + msg + '</div>';
-}
-function hideState() { document.getElementById('stateBox').classList.add('hidden'); }
+document.getElementById('fetchBtn').onclick = async function() {
+    const storeId = document.getElementById('storeId').value.toUpperCase();
+    const rack = document.getElementById('filterRak').value.toUpperCase();
+    this.textContent = 'Memuat...';
+    
+    try {
+        const r = await fetch(`/proxy-products?storeId=${storeId}&rack=${rack}`);
+        const data = await r.json();
+        
+        allData = Array.isArray(data) ? data : [];
+        if(allData.length === 0) alert('Data tidak ditemukan');
 
-// Auto uppercase logic
-['storeId','filterRak','filterRakTable'].forEach(id => {
-    document.getElementById(id).addEventListener('input', function() {
-        var pos = this.selectionStart;
-        this.value = this.value.toUpperCase();
-        this.setSelectionRange(pos, pos);
-        if(id === 'filterRakTable') renderTable();
-    });
-});
-
-// Enter key
-['storeId','filterRak'].forEach(function(id) {
-  document.getElementById(id).addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') document.getElementById('fetchBtn').click();
-  });
-});
-
-document.getElementById('fetchBtn').addEventListener('click', function() {
-  var storeId = document.getElementById('storeId').value.trim().toUpperCase();
-  var filterRak = document.getElementById('filterRak').value.trim().toUpperCase();
-  if (!storeId) { setState('error', 'Kode toko wajib diisi!'); return; }
-
-  var btn = document.getElementById('fetchBtn');
-  btn.disabled = true; btn.textContent = 'Memuat...';
-  document.getElementById('statsEl').classList.add('hidden');
-  document.getElementById('tableCard').classList.add('hidden');
-  setState('loading', 'Mengambil data produk...');
-
-  fetch('/proxy-products?storeId=' + encodeURIComponent(storeId))
-  .then(function(r) { if (!r.ok) throw new Error('Server error: ' + r.status); return r.json(); })
-  .then(function(data) {
-    if (!Array.isArray(data) || !data.length) throw new Error('Data tidak ditemukan untuk toko ' + storeId);
-
-    if (filterRak) {
-      data = data.filter(function(item) {
-        return item.planogram && item.planogram.toUpperCase().indexOf(filterRak) === 0;
-      });
-      if (!data.length) throw new Error('Tidak ada item untuk rak ' + filterRak);
+        document.getElementById('statsEl').classList.remove('hidden');
+        document.getElementById('tableCard').classList.remove('hidden');
+        document.getElementById('s-store').textContent = storeId;
+        document.getElementById('s-total').textContent = allData.length;
+        
+        renderTable();
+    } catch (e) {
+        alert('Gagal mengambil data: ' + e.message);
+    } finally {
+        this.textContent = 'Tampilkan';
     }
-
-    allData = data;
-
-    var racks = {}, subdepts = {};
-    data.forEach(function(item) {
-      var rack = item.planogram ? item.planogram.split('-')[0] : '0';
-      if (rack !== '0') racks[rack] = 1;
-      subdepts[item.subdept] = 1;
-    });
-
-    hideState();
-    document.getElementById('statsEl').classList.remove('hidden');
-    document.getElementById('tableCard').classList.remove('hidden');
-    document.getElementById('s-store').textContent = storeId;
-    document.getElementById('s-total').textContent = data.length.toLocaleString('id-ID');
-    document.getElementById('s-rak').textContent = Object.keys(racks).length;
-    document.getElementById('s-subdept').textContent = Object.keys(subdepts).length;
-
-    document.getElementById('filterRakTable').value = filterRak;
-    renderTable();
-  })
-  .catch(function(e) { setState('error', e.message); })
-  .finally(function() { btn.disabled = false; btn.textContent = 'Tampilkan'; });
-});
+};
 
 function renderTable() {
-  var q = document.getElementById('search').value.toLowerCase();
-  var rakFilter = document.getElementById('filterRakTable').value.trim().toUpperCase();
+    const q = document.getElementById('search').value.toLowerCase();
+    const tbody = document.getElementById('tbody');
+    
+    let filtered = allData.filter(item => 
+        item.descp.toLowerCase().includes(q) || item.plu.toString().includes(q)
+    );
 
-  var filtered = allData.filter(function(r) {
-    var matchSearch = !q || r.descp.toLowerCase().indexOf(q) > -1 ||
-      String(r.plu).indexOf(q) > -1 || String(r.barcode).indexOf(q) > -1;
-    var matchRak = !rakFilter || (r.planogram && r.planogram.toUpperCase().indexOf(rakFilter) === 0);
-    return matchSearch && matchRak;
-  });
+    filtered.sort((a, b) => {
+        let valA = a[sortKey], valB = b[sortKey];
+        return (valA < valB ? -1 : 1) * sortDir;
+    });
 
-  var sorted = filtered.slice().sort(function(a, b) {
-    var av = a[sortKey], bv = b[sortKey];
-    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
-    return sortDir * (av - bv);
-  });
+    tbody.innerHTML = filtered.map(r => `
+        <tr>
+            <td style="font-family:var(--mono)">${Math.round(r.plu)}</td>
+            <td>${r.descp}</td>
+            <td class="rack">${r.planogram || '-'}</td>
+            <td style="font-family:var(--mono)">${r.barcode || '-'}</td>
+            <td class="price">${formatter.format(r.price || 0)}</td>
+            <td style="text-align:right; font-family:var(--mono)">${r.subdept}</td>
+        </tr>
+    `).join('');
 
-  var tbody = document.getElementById('tbody');
-  if (!sorted.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#555">Tidak ada data</td></tr>';
-    return;
-  }
-
-  var html = '';
-  for (var i = 0; i < sorted.length; i++) {
-    var r = sorted[i];
-    var barcode = r.barcode && r.barcode !== 0 ? Math.round(r.barcode) : '-';
-    var formattedPrice = r.price_sale ? formatter.format(r.price_sale) : '0';
-
-    html += '<tr>' +
-      '<td class="mono">' + Math.round(r.plu) + '</td>' +
-      '<td title="' + r.descp + '">' + r.descp + '</td>' +
-      '<td class="rack" title="' + r.planogram + '">' + r.planogram + '</td>' +
-      '<td class="mono">' + barcode + '</td>' +
-      '<td class="price">' + formattedPrice + '</td>' +
-      '<td class="right">' + r.subdept + '</td>' +
-    '</tr>';
-  }
-  tbody.innerHTML = html;
-
-  var racks = {};
-  sorted.forEach(function(r) {
-    var rack = r.planogram ? r.planogram.split('-')[0] : '0';
-    if (rack !== '0') racks[rack] = 1;
-  });
-
-  document.getElementById('footerInfo').textContent = sorted.length + ' dari ' + allData.length + ' item';
-  document.getElementById('footerRak').textContent = Object.keys(racks).length + ' rak';
-
-  ['plu','descp','planogram','barcode','price_sale','subdept'].forEach(function(k) {
-    var el = document.getElementById('th-' + k);
-    if (el) el.className = k === sortKey ? 'active' : '';
-  });
+    // Update Header sorting active class
+    ['plu','descp','planogram','barcode','price'].forEach(k => {
+        const el = document.getElementById('th-' + k);
+        if(el) el.className = k === sortKey ? 'active' : '';
+    });
 }
 
 function sortBy(key) {
-  if (sortKey === key) sortDir *= -1;
-  else { sortKey = key; sortDir = 1; }
-  renderTable();
+    if (sortKey === key) sortDir *= -1;
+    else { sortKey = key; sortDir = 1; }
+    renderTable();
 }
 
-document.getElementById('search').addEventListener('input', renderTable);
+document.getElementById('search').oninput = renderTable;
 
-document.getElementById('exportBtn').addEventListener('click', function() {
-  if (!allData.length) return;
-  var storeId = document.getElementById('storeId').value.trim();
-  var ws = XLSX.utils.json_to_sheet(allData.map(function(r) {
-    return {
-      PLU: Math.round(r.plu),
-      'Nama Barang': r.descp,
-      Planogram: r.planogram,
-      Rak: r.planogram && r.planogram !== '0' ? r.planogram.split('-')[0] : '-',
-      Barcode: r.barcode && r.barcode !== 0 ? Math.round(r.barcode) : '',
-      'Price Sale': r.price_sale || 0,
-      Subdept: r.subdept
-    };
-  }));
-  var wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Planogram');
-  XLSX.writeFile(wb, 'Planogram_' + storeId + '.xlsx');
-});
+document.getElementById('exportBtn').onclick = function() {
+    const ws = XLSX.utils.json_to_sheet(allData.map(r => ({
+        PLU: r.plu, Barang: r.descp, Rak: r.planogram, Harga: r.price
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data");
+    XLSX.writeFile(wb, "Planogram.xlsx");
+};
 </script>
 </body>
 </html>
