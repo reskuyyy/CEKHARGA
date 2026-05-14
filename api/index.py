@@ -13,24 +13,27 @@ HEADERS = {
 
 @application.route('/')
 def index():
-    return "Planogram API Proxy Running"
+    return "Backend Planogram Viewer Active"
 
 @application.route('/proxy-products')
 def proxy_products():
-    store_id = request.args.get('storeId', '')
-    # Kita buat fleksibel, bisa terima rak atau tidak
-    rack = request.args.get('rack', '')
+    store_id = request.args.get('storeId', '').upper()
+    rack = request.args.get('rack', '').upper()
     
     if not store_id:
         return {'error': 'storeId wajib diisi'}, 400
     
-    # Menggunakan URL API yang kamu berikan
-    url = f"https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId={store_id}&rack={rack}"
+    # URL 1: Berdasarkan Rak (URL yang kamu kasih)
+    # URL 2: Berdasarkan Toko (URL cadangan jika per rak kosong)
+    if rack:
+        url = f"https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId={store_id}&rack={rack}"
+    else:
+        url = f"https://app.alfastore.co.id/prd/api/cex/get_product_list/?storeId={store_id}"
     
     try:
-        resp = requests.get(url, headers=HEADERS, timeout=30)
-        return Response(resp.content, status=resp.status_code,
-                        content_type=resp.headers.get('Content-Type', 'application/json'))
+        resp = requests.get(url, headers=HEADERS, timeout=20)
+        # Kirim balik apa adanya ke frontend
+        return Response(resp.content, status=resp.status_code, content_type='application/json')
     except Exception as e:
         return {'error': str(e)}, 502
 
