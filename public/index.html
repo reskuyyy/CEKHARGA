@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Search — Alfamart</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--bg4:#222;
+  --border:#2a2a2a;--border2:#333;--text:#e8e8e8;--text2:#888;--text3:#555;
+  --accent:#ff4e1a;--accent2:#ff6b3d;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+  --radius:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+
+.top-bar{background:var(–bg2);border-bottom:1px solid var(–border);padding:0 24px;display:flex;align-items:center;height:56px;gap:12px;position:sticky;top:0;z-index:10;}
+.logo-dot{width:8px;height:8px;background:var(–accent);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+.logo-text{font-size:15px;font-weight:600;}
+.logo-sub{font-size:11px;color:var(–text3);font-family:var(–mono);}
+
+.container{max-width:800px;margin:0 auto;padding:32px 24px;}
+
+/* SEARCH BOX */
+.search-section{margin-bottom:24px;}
+.search-label{font-size:11px;font-family:var(–mono);color:var(–text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+.search-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;}
+.store-input{background:var(–bg3);border:1px solid var(–border2);border-radius:var(–radius);padding:10px 14px;color:var(–text);font-family:var(–mono);font-size:13px;outline:none;width:110px;transition:border-color .2s;}
+.store-input:focus{border-color:var(–accent);}
+.search-wrap{position:relative;flex:1;}
+.search-main{width:100%;background:var(–bg2);border:1px solid var(–border2);border-radius:var(–radius);padding:12px 16px 12px 44px;color:var(–text);font-family:var(–sans);font-size:15px;outline:none;transition:border-color .2s;}
+.search-main:focus{border-color:var(–accent);}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(–text3);font-size:16px;pointer-events:none;}
+.btn-load{background:var(–accent);color:#fff;border:none;border-radius:var(–radius);padding:12px 20px;font-family:var(–sans);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.btn-load:hover{background:var(–accent2);}
+.btn-load:disabled{background:var(–bg4);color:var(–text3);cursor:not-allowed;}
+
+/* STATUS */
+.status-bar{font-size:12px;font-family:var(–mono);color:var(–text3);margin-bottom:16px;min-height:18px;}
+.status-bar.loaded{color:var(–green);}
+.status-bar.error{color:var(–red);}
+
+/* RESULTS */
+.results-grid{display:flex;flex-direction:column;gap:8px;}
+
+.product-card{background:var(–bg2);border:1px solid var(–border);border-radius:var(–radius-lg);padding:16px 18px;cursor:pointer;transition:border-color .2s,background .2s;}
+.product-card:hover{border-color:var(–accent);background:var(–bg3);}
+.product-card.expanded{border-color:var(–accent);}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.card-name{font-size:14px;font-weight:600;color:var(–text);flex:1;}
+.card-plu{font-size:11px;font-family:var(–mono);color:var(–text3);}
+.card-rack{font-size:11px;font-family:var(–mono);color:var(–accent);margin-top:4px;}
+.card-barcode{font-size:11px;font-family:var(–mono);color:var(–text2);margin-top:2px;}
+.card-arrow{color:var(–text3);font-size:12px;flex-shrink:0;transition:transform .2s;}
+.product-card.expanded .card-arrow{transform:rotate(180deg);}
+
+/* DETAIL */
+.card-detail{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(–border);}
+.product-card.expanded .card-detail{display:block;}
+
+.detail-loading{font-size:12px;font-family:var(–mono);color:var(–text3);}
+.detail-error{font-size:12px;font-family:var(–mono);color:var(–red);}
+
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.detail-item{background:var(–bg3);border-radius:var(–radius);padding:10px 12px;}
+.detail-label{font-size:10px;font-family:var(–mono);color:var(–text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.detail-val{font-size:16px;font-weight:600;color:var(–text);}
+.detail-val.price{color:var(–green);font-size:18px;}
+.detail-val.mono{font-family:var(–mono);font-size:13px;}
+
+.no-results{padding:48px;text-align:center;color:var(–text3);font-family:var(–mono);font-size:13px;}
+.no-results .icon{font-size:32px;margin-bottom:12px;}
+
+.hint-text{font-size:12px;font-family:var(–mono);color:var(–text3);margin-top:8px;}
+
+@media(max-width:640px){
+.search-row{grid-template-columns:1fr 1fr;}
+.store-input{width:100%;}
+.btn-load{grid-column:span 2;}
+.search-wrap{grid-column:span 2;}
+.detail-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo-dot"></div>
+  <div>
+    <div class="logo-text">Product Search</div>
+    <div class="logo-sub">ALFAMART · PRODUCT INFO</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="search-section">
+    <div class="search-label">// Cari Produk</div>
+    <div class="search-row">
+      <input type="text" class="store-input" id="storeId" value="N497" placeholder="Kode Toko">
+      <div class="search-wrap">
+        <span class="search-icon">⌕</span>
+        <input type="text" class="search-main" id="searchInput" placeholder="Cari nama barang atau PLU..." disabled>
+      </div>
+      <button class="btn-load" id="loadBtn">Load Data</button>
+    </div>
+    <div class="hint-text">* Klik Load Data dulu, lalu ketik untuk mencari. Klik produk untuk lihat harga.</div>
+  </div>
+
+  <div class="status-bar" id="statusBar">Belum ada data — klik Load Data</div>
+  <div id="results"></div>
+</div>
+
+<script>
+var allProducts = [];
+var priceCache = {};
+var currentStoreId = '';
+var debounceTimer = null;
+
+// Auto uppercase store id
+document.getElementById('storeId').addEventListener('input', function() {
+  var pos = this.selectionStart;
+  this.value = this.value.toUpperCase();
+  this.setSelectionRange(pos, pos);
+});
+
+// Load data
+document.getElementById('loadBtn').addEventListener('click', function() {
+  var storeId = document.getElementById('storeId').value.trim().toUpperCase();
+  if (!storeId) return;
+
+  currentStoreId = storeId;
+  var btn = document.getElementById('loadBtn');
+  btn.disabled = true; btn.textContent = 'Loading...';
+  setStatus('Mengambil data produk toko ' + storeId + '...', '');
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('searchInput').disabled = true;
+  allProducts = [];
+
+  fetch('/proxy-products?storeId=' + encodeURIComponent(storeId))
+  .then(function(r) { if (!r.ok) throw new Error('Server error: ' + r.status); return r.json(); })
+  .then(function(data) {
+    if (!Array.isArray(data) || !data.length) throw new Error('Data tidak ditemukan');
+    allProducts = data;
+    document.getElementById('searchInput').disabled = false;
+    document.getElementById('searchInput').focus();
+    setStatus('✓ ' + data.length.toLocaleString('id-ID') + ' produk dimuat — ketik untuk mencari', 'loaded');
+    renderResults('');
+  })
+  .catch(function(e) { setStatus('Error: ' + e.message, 'error'); })
+  .finally(function() { btn.disabled = false; btn.textContent = 'Load Data'; });
+});
+
+// Search
+document.getElementById('searchInput').addEventListener('input', function() {
+  clearTimeout(debounceTimer);
+  var q = this.value;
+  debounceTimer = setTimeout(function() { renderResults(q); }, 200);
+});
+
+document.getElementById('storeId').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('loadBtn').click();
+});
+
+function setStatus(msg, cls) {
+  var el = document.getElementById('statusBar');
+  el.textContent = msg;
+  el.className = 'status-bar' + (cls ? ' ' + cls : '');
+}
+
+function getRack(planogram) {
+  if (!planogram || planogram === '0') return null;
+  return planogram.split('-')[0];
+}
+
+function renderResults(q) {
+  var query = q.trim().toLowerCase();
+  var filtered = query.length < 1 ? [] : allProducts.filter(function(p) {
+    return p.descp.toLowerCase().indexOf(query) > -1 ||
+      String(Math.round(p.plu)).indexOf(query) > -1 ||
+      (p.barcode && String(Math.round(p.barcode)).indexOf(query) > -1);
+  });
+
+  var container = document.getElementById('results');
+
+  if (!query) {
+    container.innerHTML = '<div class="no-results"><div class="icon">⌕</div><div>Mulai ketik nama barang atau PLU</div></div>';
+    return;
+  }
+
+  if (!filtered.length) {
+    container.innerHTML = '<div class="no-results"><div class="icon">o</div><div>Tidak ada produk yang cocok</div></div>';
+    return;
+  }
+
+  // Limit 50 hasil
+  var shown = filtered.slice(0, 50);
+  var html = '<div class="results-grid">';
+  for (var i = 0; i < shown.length; i++) {
+    var p = shown[i];
+    var plu = Math.round(p.plu);
+    var rack = getRack(p.planogram);
+    var barcode = p.barcode && p.barcode !== 0 ? Math.round(p.barcode) : '-';
+    html += '<div class="product-card" data-plu="' + plu + '" data-rack="' + (rack||'') + '" data-plano="' + (p.planogram||'') + '" onclick="toggleCard(this)">' +
+      '<div class="card-top">' +
+        '<div>' +
+          '<div class="card-name">' + p.descp + '</div>' +
+          '<div class="card-plu">PLU: ' + plu + ' &nbsp;|&nbsp; Barcode: ' + barcode + '</div>' +
+          '<div class="card-rack">Rak: ' + (p.planogram && p.planogram !== '0' ? p.planogram : '-') + '</div>' +
+        '</div>' +
+        '<div class="card-arrow">▼</div>' +
+      '</div>' +
+      '<div class="card-detail"><div class="detail-loading">Memuat detail...</div></div>' +
+    '</div>';
+  }
+  html += '</div>';
+  if (filtered.length > 50) {
+    html += '<div style="text-align:center;padding:12px;font-size:12px;font-family:var(--mono);color:var(--text3)">Menampilkan 50 dari ' + filtered.length + ' hasil — perjelas pencarian</div>';
+  }
+  container.innerHTML = html;
+}
+
+function toggleCard(card) {
+  var isExpanded = card.classList.contains('expanded');
+  // Tutup semua
+  document.querySelectorAll('.product-card.expanded').forEach(function(c) {
+    c.classList.remove('expanded');
+  });
+  if (isExpanded) return;
+
+  card.classList.add('expanded');
+  var detail = card.querySelector('.card-detail');
+  var plu = card.getAttribute('data-plu');
+  var rack = card.getAttribute('data-rack');
+  var plano = card.getAttribute('data-plano');
+
+  // Cek cache
+  if (priceCache[plu]) {
+    renderDetail(detail, priceCache[plu], plu, plano);
+    return;
+  }
+
+  if (!rack) {
+    detail.innerHTML = '<div class="detail-error">Tidak ada data rak untuk produk ini</div>';
+    return;
+  }
+
+  detail.innerHTML = '<div class="detail-loading">Mengambil harga dari rak ' + rack + '...</div>';
+
+  // Fetch harga dari CheckPerRack
+  fetch('/proxy-rack-detail?storeId=' + encodeURIComponent(currentStoreId) + '&rack=' + encodeURIComponent(rack))
+  .then(function(r) { if (!r.ok) throw new Error('Server error'); return r.json(); })
+  .then(function(json) {
+    var items = json.data || [];
+    // Cari item dengan PLU yang cocok
+    var found = null;
+    for (var i = 0; i < items.length; i++) {
+      if (Math.round(items[i].plunya) === parseInt(plu)) {
+        found = items[i];
+        break;
+      }
+    }
+    // Cache semua item dari rak ini
+    for (var j = 0; j < items.length; j++) {
+      priceCache[Math.round(items[j].plunya)] = items[j];
+    }
+    if (found) {
+      renderDetail(detail, found, plu, plano);
+    } else {
+      detail.innerHTML = '<div class="detail-error">Harga tidak ditemukan di rak ' + rack + '</div>';
+    }
+  })
+  .catch(function(e) {
+    detail.innerHTML = '<div class="detail-error">Gagal mengambil harga: ' + e.message + '</div>';
+  });
+}
+
+function renderDetail(container, item, plu, plano) {
+  var html = '<div class="detail-grid">' +
+    '<div class="detail-item"><div class="detail-label">Harga Jual</div><div class="detail-val price">Rp ' + Math.round(item.price_sale).toLocaleString('id-ID') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-label">Min Display</div><div class="detail-val">' + item.mindis + '</div></div>' +
+    '<div class="detail-item"><div class="detail-label">Retur Day</div><div class="detail-val">' + item.retur_day + '</div></div>' +
+    '<div class="detail-item"><div class="detail-label">Shelve</div><div class="detail-val mono">' + item.slvnya + '</div></div>' +
+    '<div class="detail-item"><div class="detail-label">No Urut</div><div class="detail-val mono">' + item.nonya + '</div></div>' +
+    '<div class="detail-item"><div class="detail-label">Planogram</div><div class="detail-val mono" style="font-size:11px">' + (plano||'-') + '</div></div>' +
+  '</div>';
+  container.innerHTML = html;
+}
+</script>
+
+</body>
+</html>
