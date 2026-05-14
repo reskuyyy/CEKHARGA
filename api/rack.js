@@ -1,4 +1,4 @@
-export default async function handler(req,res){
+export default async function handler(req, res){
 
   const {
     storeId,
@@ -11,17 +11,28 @@ export default async function handler(req,res){
   try{
 
     const response =
-    await fetch(url);
+    await fetch(url, {
 
-    const data =
-    await response.json();
+      headers:{
+        'User-Agent':'Mozilla/5.0'
+      }
 
-    res.status(200).json(data);
+    });
+
+    const text =
+    await response.text();
+
+    // kirim raw response
+    res.status(200).send(text);
 
   }catch(err){
 
     res.status(500).json({
-      error:'Gagal fetch API'
+
+      error:'Fetch gagal',
+
+      detail:err.message
+
     });
 
   }
