@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Stock Opname Report</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+
+  margin:0;
+  padding:16px;
+
+  font-family:Inter,Arial,sans-serif;
+
+  background:#eef2f7;
+
+  color:#222;
+
+}
+
+.container{
+
+  max-width:1400px;
+
+  margin:auto;
+
+}
+
+.card{
+
+  background:white;
+
+  border-radius:20px;
+
+  padding:20px;
+
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.08);
+
+}
+
+/* HEADER */
+
+.header{
+
+  margin-bottom:20px;
+
+}
+
+.header h1{
+
+  margin:0;
+
+  font-size:28px;
+
+}
+
+.header p{
+
+  margin-top:6px;
+
+  color:#666;
+
+}
+
+/* TOOLBAR */
+
+.toolbar{
+
+  display:flex;
+
+  gap:10px;
+
+  flex-wrap:wrap;
+
+  margin-bottom:20px;
+
+}
+
+input{
+
+  padding:12px;
+
+  border-radius:12px;
+
+  border:1px solid #dcdcdc;
+
+  background:#fafafa;
+
+  font-size:14px;
+
+  flex:1;
+
+  min-width:150px;
+
+}
+
+input:focus{
+
+  outline:none;
+
+  border-color:#4361ee;
+
+  background:white;
+
+}
+
+button{
+
+  padding:12px 18px;
+
+  border:none;
+
+  border-radius:12px;
+
+  font-size:14px;
+
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition:0.2s;
+
+}
+
+button:hover{
+
+  transform:translateY(-1px);
+
+}
+
+.btn-blue{
+
+  background:#4361ee;
+
+  color:white;
+
+}
+
+.btn-green{
+
+  background:#2a9d8f;
+
+  color:white;
+
+}
+
+/* TABLE */
+
+.table-wrapper{
+
+  overflow:auto;
+
+  border-radius:16px;
+
+  border:1px solid #e5e7eb;
+
+  background:white;
+
+}
+
+table{
+
+  width:100%;
+
+  border-collapse:collapse;
+
+  table-layout:fixed;
+
+  font-size:12px;
+
+}
+
+th{
+
+  background:#f8fafc;
+
+  color:#333;
+
+  position:sticky;
+
+  top:0;
+
+  z-index:10;
+
+}
+
+th,td{
+
+  border:1px solid #e5e7eb;
+
+  padding:6px;
+
+  white-space:normal;
+
+  word-break:break-word;
+
+  overflow-wrap:break-word;
+
+  vertical-align:top;
+
+}
+
+/* zebra */
+
+tr:nth-child(even){
+
+  background:#fafafa;
+
+}
+
+tr:hover{
+
+  background:#edf2ff;
+
+}
+
+/* hide Conv.1 */
+
+table tr > *:nth-child(3){
+  display:none;
+}
+
+/* hide Conv.2 */
+
+table tr > *:nth-child(4){
+  display:none;
+}
+
+/* warna selisih */
+
+.positive{
+
+  color:#16a34a;
+
+  font-weight:bold;
+
+}
+
+.negative{
+
+  color:#dc2626;
+
+  font-weight:bold;
+
+}
+
+/* hidden */
+
+.hidden-row{
+  display:none;
+}
+
+/* mobile */
+
+@media(max-width:768px){
+
+  .toolbar{
+
+    flex-direction:column;
+
+  }
+
+  input,button{
+
+    width:100%;
+
+  }
+
+  table{
+
+    font-size:11px;
+
+  }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<div class="header">
+
+<h1>Stock Opname Report</h1>
+
+<p>
+Monitoring Selisih Stock Opname
+</p>
+
+</div>
+
+<div class="toolbar">
+
+<input
+  type="text"
+  id="storeId"
+  value="N497"
+  placeholder="Kode Toko"
+>
+
+<input
+  type="date"
+  id="dateSo"
+>
+
+<button
+  class="btn-blue"
+  onclick="loadData()"
+>
+Tampilkan
+</button>
+
+<button
+  class="btn-green"
+  onclick="exportExcel()"
+>
+Export Excel
+</button>
+
+</div>
+
+<div
+  class="table-wrapper"
+  id="result"
+></div>
+
+</div>
+
+</div>
+
+<script>
+
+function formatDate(dateValue){
+
+  const d = new Date(dateValue);
+
+  const day =
+    String(d.getDate()).padStart(2,'0');
+
+  const month =
+    String(d.getMonth()+1).padStart(2,'0');
+
+  const year =
+    d.getFullYear();
+
+  return `${day}-${month}-${year}`;
+
+}
+
+async function loadData(){
+
+  const result =
+    document.getElementById('result');
+
+  const storeId =
+    document.getElementById('storeId').value;
+
+  const dateInput =
+    document.getElementById('dateSo').value;
+
+  if(!dateInput){
+
+    alert('Tanggal wajib diisi');
+
+    return;
+
+  }
+
+  const dateSo =
+    formatDate(dateInput);
+
+  result.innerHTML =
+    '<p>Loading...</p>';
+
+  try{
+
+    const url =
+      `/api/so?storeId=${storeId}&dateSo=${dateSo}&typeSo=GRAND`;
+
+    const response =
+      await fetch(url);
+
+    const html =
+      await response.text();
+
+    result.innerHTML =
+      html;
+
+    processTable();
+
+  }catch(err){
+
+    result.innerHTML =
+      err.message;
+
+  }
+
+}
+
+function processTable(){
+
+  const rows =
+    document.querySelectorAll('tr');
+
+  let hideMode = false;
+
+  rows.forEach(row=>{
+
+    const text =
+      row.innerText.toUpperCase();
+
+    // hide bagian subdept
+
+    if(text.includes('SUBDEPT')){
+
+      hideMode = true;
+
+    }
+
+    // stop hide saat rack muncul
+
+    if(
+      text.includes('RACK')
+    ){
+
+      hideMode = false;
+
+    }
+
+    if(hideMode){
+
+      row.style.display =
+        'none';
+
+    }
+
+    const cells =
+      row.querySelectorAll('td');
+
+    if(cells.length > 0){
+
+      const lastCell =
+        cells[cells.length-1];
+
+      const value =
+        parseFloat(
+          lastCell.innerText
+          .replace(/,/g,'')
+          .trim()
+        );
+
+      // hide selisih 0
+
+      if(value === 0){
+
+        row.classList.add(
+          'hidden-row'
+        );
+
+      }
+
+      // warna
+
+      if(value > 0){
+
+        lastCell.classList.add(
+          'positive'
+        );
+
+      }
+
+      if(value < 0){
+
+        lastCell.classList.add(
+          'negative'
+        );
+
+      }
+
+    }
+
+  });
+
+}
+
+function exportExcel(){
+
+  const table =
+    document.querySelector('table');
+
+  if(!table){
+
+    alert('Belum ada data');
+
+    return;
+
+  }
+
+  const clone =
+    table.cloneNode(true);
+
+  clone
+    .querySelectorAll('.hidden-row')
+    .forEach(row=>row.remove());
+
+  const wb =
+    XLSX.utils.table_to_book(clone);
+
+  XLSX.writeFile(
+    wb,
+    'SO_REPORT.xlsx'
+  );
+
+}
+
+</script>
+
+</body>
+</html>
