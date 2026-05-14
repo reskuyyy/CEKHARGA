@@ -331,11 +331,23 @@ async function loadData(){
 
     );
 
-    const data =
-    await res.json();
+   const text =
+await res.text();
 
-    const items =
-    data.data || data || [];
+console.log(text);
+
+let items = [];
+
+try{
+
+  items =
+  JSON.parse(text);
+
+}catch{
+
+  alert('Response bukan JSON');
+
+  return;
 
     if(items.length === 0){
 
