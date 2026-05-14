@@ -1,4 +1,4 @@
-from flask import Flask, request, Response, send_from_directory
+from flask import Flask, request, Response
 from flask_cors import CORS
 import requests
 import os
@@ -13,13 +13,14 @@ HEADERS = {
 
 @application.route('/')
 def index():
-    return "OK"
+    return "API Proxy is Running"
 
 @application.route('/proxy-products')
 def proxy_products():
     store_id = request.args.get('storeId', '')
     if not store_id:
         return {'error': 'storeId wajib diisi'}, 400
+    
     url = f"https://app.alfastore.co.id/prd/api/cex/get_product_list/?storeId={store_id}"
     try:
         resp = requests.get(url, headers=HEADERS, timeout=30)
