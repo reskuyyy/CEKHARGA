@@ -3,45 +3,31 @@ from flask_cors import CORS
 import requests
 import os
 
-application = Flask(**name**)
+application = Flask(__name__)
 CORS(application)
 
 HEADERS = {
-‘User-Agent’: ‘Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36’,
-‘Accept’: ‘application/json’,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'Accept': 'application/json',
 }
 
-@application.route(’/’)
+@application.route('/')
 def index():
-return “OK”
+    return "OK"
 
-@application.route(’/proxy-products’)
+@application.route('/proxy-products')
 def proxy_products():
-store_id = request.args.get(‘storeId’, ‘’)
-if not store_id:
-return {‘error’: ‘storeId wajib diisi’}, 400
-url = f”https://app.alfastore.co.id/prd/api/cex/get_product_list/?storeId={store_id}”
-try:
-resp = requests.get(url, headers=HEADERS, timeout=30)
-return Response(resp.content, status=resp.status_code,
-content_type=resp.headers.get(‘Content-Type’, ‘application/json’))
-except Exception as e:
-return {‘error’: str(e)}, 502
+    store_id = request.args.get('storeId', '')
+    if not store_id:
+        return {'error': 'storeId wajib diisi'}, 400
+    url = f"https://app.alfastore.co.id/prd/api/cex/get_product_list/?storeId={store_id}"
+    try:
+        resp = requests.get(url, headers=HEADERS, timeout=30)
+        return Response(resp.content, status=resp.status_code,
+                        content_type=resp.headers.get('Content-Type', 'application/json'))
+    except Exception as e:
+        return {'error': str(e)}, 502
 
-@application.route(’/proxy-rack-detail’)
-def proxy_rack_detail():
-store_id = request.args.get(‘storeId’, ‘’)
-rack = request.args.get(‘rack’, ‘’)
-if not store_id or not rack:
-return {‘error’: ‘storeId dan rack wajib diisi’}, 400
-url = f”https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId={store_id}&rack={rack}”
-try:
-resp = requests.get(url, headers=HEADERS, timeout=20)
-return Response(resp.content, status=resp.status_code,
-content_type=resp.headers.get(‘Content-Type’, ‘application/json’))
-except Exception as e:
-return {‘error’: str(e)}, 502
-
-if **name** == ‘**main**’:
-port = int(os.environ.get(‘PORT’, 8080))
-application.run(host=‘0.0.0.0’, port=port)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 8080))
+    application.run(host='0.0.0.0', port=port)
