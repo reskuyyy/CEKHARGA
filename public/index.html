@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planogram Viewer - Final Fixed</title>
+    <title>Planogram Viewer - Ultimate Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
@@ -40,7 +40,7 @@
                 <input type="text" id="storeId" value="N497">
             </div>
             <div>
-                <label>FILTER RAK (MISAL: JA1, AU1)</label>
+                <label>RAK (CONTOH: JA1)</label>
                 <input type="text" id="rack" placeholder="Kosongkan untuk semua">
             </div>
             <button class="btn" id="fetchBtn">Tampilkan</button>
@@ -61,7 +61,7 @@
                             <th>NAMA BARANG</th>
                             <th>RAK</th>
                             <th>BARCODE</th>
-                            <th style="text-align:right">HARGA (SALE)</th>
+                            <th style="text-align:right">HARGA</th>
                         </tr>
                     </thead>
                     <tbody id="tbody"></tbody>
@@ -86,17 +86,24 @@
             const resp = await fetch(`/proxy-products?storeId=${sId}&rack=${rk}`);
             const result = await resp.json();
             
-            // Handle berbagai struktur response API
-            allData = Array.isArray(result) ? result : (result.data || result.product_list || []);
+            // Log ke console untuk investigasi jika masih gagal
+            console.log("Raw API Response:", result);
+
+            // Normalisasi data (mengambil array di mana pun ia berada)
+            if (Array.isArray(result)) {
+                allData = result;
+            } else {
+                allData = result.data || result.product_list || result.list || [];
+            }
 
             if(allData.length > 0) {
                 document.getElementById('mainView').classList.remove('hidden');
                 renderTable();
             } else {
-                alert("Data tidak ditemukan untuk parameter tersebut.");
+                alert("Data tidak ditemukan.");
             }
         } catch (e) {
-            alert("Error Koneksi: " + e.message);
+            alert("Error: " + e.message);
         } finally {
             this.textContent = 'Tampilkan';
             this.disabled = false;
@@ -113,17 +120,23 @@
         );
 
         tbody.innerHTML = filtered.map(item => {
-            // DETEKSI FIELD PLU
-            const plu = item.plu || item.plu_code || "-";
+            // DETEKSI PLU
+            const plu = item.plu || item.plu_code || item.PLU || "-";
             
-            // DETEKSI FIELD RAK
+            // DETEKSI RAK
             const rak = item.planogram || item.rack || item.rack_id || "-";
             
-            // DETEKSI FIELD BARCODE
-            const barcode = item.barcode || item.bar_code || "-";
+            // DETEKSI BARCODE
+            const barcode = item.barcode || item.bar_code || item.BARCODE || "-";
             
-            // DETEKSI HARGA (Mencakup price_sell untuk API List Toko)
-            const hargaRaw = item.price_sell || item.price_sale || item.price || item.salesPrice || 0;
+            // DETEKSI HARGA (Mencari semua kemungkinan kata kunci harga dari API Alfamart)
+            const hargaRaw = item.price_sell || 
+                             item.price_sale || 
+                             item.price || 
+                             item.sales_price || 
+                             item.price_net || 
+                             item.sell_price ||
+                             item.priceSell || 0;
 
             return `
                 <tr>
