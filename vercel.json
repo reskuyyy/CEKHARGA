@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "public/index.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/proxy-products", "dest": "api/index.py" },
+    { "src": "/proxy-rack-detail", "dest": "api/index.py" },
+    { "src": "/", "dest": "public/index.html" }
+  ]
+}
