@@ -15,10 +15,11 @@ def proxy_products():
     store_id = request.args.get('storeId', '').upper()
     rack = request.args.get('rack', '').upper()
     
-    # URL dinamis: Kalau rak diisi pakai CheckPerRack, kalau kosong pakai list umum
     if rack:
+        # API Khusus Per Rak
         url = f"https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId={store_id}&rack={rack}"
     else:
+        # API List Umum Satu Toko
         url = f"https://app.alfastore.co.id/prd/api/cex/get_product_list/?storeId={store_id}"
     
     try:
