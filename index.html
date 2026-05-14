@@ -1,471 +1,303 @@
-# index.html
-
-```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Cek Data Rack</title>
-
+<title>Planogram Viewer</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-
-*{
-  box-sizing:border-box;
+:root{
+  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;--bg4:#222;
+  --border:#2a2a2a;--border2:#333;--text:#e8e8e8;--text2:#888;--text3:#555;
+  --accent:#ff4e1a;--accent2:#ff6b3d;--green:#22c55e;--red:#ef4444;--yellow:#f59e0b;
+  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
+  --radius:8px;--radius-lg:12px;
 }
-
-body{
-  margin:0;
-  font-family:Inter,Arial,sans-serif;
-  background:#eef2f7;
-  color:#222;
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+.top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:56px;gap:12px;position:sticky;top:0;z-index:10;}
+.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+.logo-text{font-size:15px;font-weight:600;}
+.logo-sub{font-size:11px;color:var(--text3);font-family:var(--mono);}
+.container{max-width:1100px;margin:0 auto;padding:24px;}
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:16px;}
+.form-title{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;}
+.field label{display:block;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:6px;letter-spacing:.05em;}
+.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color .2s;}
+.field input:focus{border-color:var(--accent);}
+.hint{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px;}
+.btn-fetch{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:9px 24px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;height:38px;white-space:nowrap;}
+.btn-fetch:hover{background:var(--accent2);}
+.btn-fetch:disabled{background:var(--bg4);color:var(--text3);cursor:not-allowed;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;}
+.stat-label{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.stat-val{font-size:20px;font-weight:700;color:var(--text);}
+.stat-val.accent{color:var(--accent);}
+.stat-val.green{color:var(--green);}
+.stat-val.yellow{color:var(--yellow);}
+.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.table-toolbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:12px;background:var(--bg3);flex-wrap:wrap;}
+.search-input{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:220px;}
+.search-input:focus{border-color:var(--accent);}
+.filter-rack{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);padding:7px 12px;color:var(--text);font-family:var(--mono);font-size:12px;outline:none;width:140px;}
+.filter-rack:focus{border-color:var(--accent);}
+.btn-export{background:transparent;border:1px solid var(--border2);border-radius:var(--radius);padding:7px 16px;color:var(--text2);font-family:var(--sans);font-size:12px;font-weight:500;cursor:pointer;}
+.btn-export:hover{border-color:var(--green);color:var(--green);}
+.table-scroll{overflow-x:auto;max-height:520px;overflow-y:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;white-space:nowrap;}
+thead th:hover{color:var(--text);}thead th.active{color:var(--accent);}
+td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg3);}
+td.mono{font-family:var(--mono);font-size:11px;color:var(--text2);}
+td.rack{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;}
+td.right{text-align:right;font-family:var(--mono);}
+.table-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;font-family:var(--mono);color:var(--text3);background:var(--bg3);display:flex;justify-content:space-between;}
+.state-box{padding:48px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:13px;}
+.state-box .icon{font-size:32px;margin-bottom:12px;}
+.state-error{color:var(--red);}
+.hidden{display:none!important;}
+@media(max-width:640px){
+  .form-row{grid-template-columns:1fr;}
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .table-toolbar{flex-direction:column;align-items:stretch;}
+  .search-input,.filter-rack{width:100%;}
 }
-
-.header{
-
-  background:
-  linear-gradient(
-    135deg,
-    #0d47ff,
-    #00aaff
-  );
-
-  color:white;
-
-  padding:18px;
-
-  box-shadow:
-  0 2px 10px rgba(0,0,0,.2);
-
-}
-
-.header h1{
-  margin:0;
-  font-size:28px;
-}
-
-.header p{
-  margin:4px 0 0;
-  opacity:.9;
-}
-
-.container{
-  padding:14px;
-}
-
-.control{
-
-  background:white;
-
-  padding:14px;
-
-  border-radius:14px;
-
-  box-shadow:
-  0 2px 10px rgba(0,0,0,.08);
-
-  display:flex;
-
-  flex-wrap:wrap;
-
-  gap:10px;
-
-  align-items:center;
-
-  margin-bottom:14px;
-
-}
-
-input{
-
-  padding:12px;
-
-  border-radius:10px;
-
-  border:1px solid #dcdcdc;
-
-  font-size:14px;
-
-  background:#fafafa;
-
-}
-
-button{
-
-  border:none;
-
-  padding:12px 18px;
-
-  border-radius:10px;
-
-  cursor:pointer;
-
-  color:white;
-
-  font-weight:600;
-
-  background:#0d47ff;
-
-}
-
-.table-wrap{
-
-  background:white;
-
-  border-radius:14px;
-
-  overflow:auto;
-
-  box-shadow:
-  0 2px 10px rgba(0,0,0,.08);
-
-}
-
-.table-wrap::-webkit-scrollbar{
-  height:8px;
-}
-
-.table-wrap::-webkit-scrollbar-thumb{
-  background:#cbd5e1;
-  border-radius:20px;
-}
-
-table{
-
-  width:100%;
-
-  border-collapse:collapse;
-
-  min-width:700px;
-
-}
-
-th{
-
-  background:#f8fafc;
-
-  position:sticky;
-
-  top:0;
-
-  z-index:5;
-
-}
-
-th,
-td{
-
-  border:1px solid #e5e7eb;
-
-  padding:10px;
-
-  white-space:nowrap;
-
-}
-
-tbody tr:nth-child(even){
-  background:#fafafa;
-}
-
-tbody tr:hover{
-  background:#edf2ff;
-}
-
-.numeric{
-  text-align:right;
-}
-
-.loading{
-
-  padding:20px;
-
-  text-align:center;
-
-  color:#666;
-
-}
-
-@media(max-width:768px){
-
-  .control{
-    flex-direction:column;
-    align-items:stretch;
-  }
-
-  input,
-  button{
-    width:100%;
-  }
-
-  table{
-    min-width:100%;
-    font-size:12px;
-  }
-
-  th,
-  td{
-    padding:8px;
-  }
-
-}
-
 </style>
-
 </head>
-
 <body>
-
-<div class="header">
-
-<h1>CEK DATA RACK</h1>
-
-<p>
-Monitoring Barang Per Rack
-</p>
-
+<div class="top-bar">
+  <div class="logo-dot"></div>
+  <div>
+    <div class="logo-text">Planogram Viewer</div>
+    <div class="logo-sub">ALFAMART · PRODUCT INFO</div>
+  </div>
 </div>
-
 <div class="container">
+  <div class="form-card">
+    <div class="form-title">// Parameter Query</div>
+    <div class="form-row">
+      <div class="field">
+        <label>KODE TOKO</label>
+        <input type="text" id="storeId" value="N497" placeholder="contoh: N497">
+      </div>
+      <div class="field">
+        <label>FILTER RAK (opsional)</label>
+        <input type="text" id="filterRak" placeholder="contoh: AU1">
+        <div class="hint">* Kosongkan untuk tampil semua</div>
+      </div>
+      <button class="btn-fetch" id="fetchBtn">Tampilkan</button>
+    </div>
+  </div>
 
-<div class="control">
+  <div id="statsEl" class="stats hidden">
+    <div class="stat-card"><div class="stat-label">Store ID</div><div class="stat-val accent" id="s-store">-</div></div>
+    <div class="stat-card"><div class="stat-label">Total Item</div><div class="stat-val" id="s-total">-</div></div>
+    <div class="stat-card"><div class="stat-label">Total Rak</div><div class="stat-val yellow" id="s-rak">-</div></div>
+    <div class="stat-card"><div class="stat-label">Total Subdept</div><div class="stat-val green" id="s-subdept">-</div></div>
+  </div>
 
-<input
-  type="text"
-  id="storeId"
-  placeholder="Kode Toko"
-  value="N497"
->
+  <div id="tableCard" class="table-card hidden">
+    <div class="table-toolbar">
+      <input type="text" class="search-input" id="search" placeholder="Cari PLU / nama / barcode...">
+      <input type="text" class="filter-rack" id="filterRakTable" placeholder="Filter rak: AU1">
+      <button class="btn-export" id="exportBtn">Export Excel</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortBy('plu')" id="th-plu">PLU</th>
+            <th onclick="sortBy('descp')" id="th-descp">Nama Barang</th>
+            <th onclick="sortBy('planogram')" id="th-planogram">Planogram / Rak</th>
+            <th onclick="sortBy('barcode')" id="th-barcode">Barcode</th>
+            <th onclick="sortBy('subdept')" id="th-subdept" style="text-align:right">Subdept</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <span id="footerInfo">-</span>
+      <span id="footerRak">-</span>
+    </div>
+  </div>
 
-<input
-  type="text"
-  id="rack"
-  placeholder="Kode Rack"
-  value="AU1"
->
-
-<button onclick="loadData()">
-Tampilkan
-</button>
-
-</div>
-
-<div class="table-wrap">
-
-<table id="table-rack">
-
-<thead>
-
-<tr>
-
-<th>PLU</th>
-<th>Nama Barang</th>
-<th>Rack</th>
-<th>OH</th>
-<th>Harga</th>
-
-</tr>
-
-</thead>
-
-<tbody></tbody>
-
-</table>
-
-<div
-  class="loading"
-  id="loading"
-  style="display:none"
->
-Mengambil data...
-</div>
-
-</div>
-
+  <div id="stateBox" class="state-box">
+    <div class="icon">o</div>
+    <div>Masukkan kode toko lalu klik Tampilkan</div>
+  </div>
 </div>
 
 <script>
+var allData = [], sortKey = 'planogram', sortDir = 1;
 
-async function loadData(){
+function setState(type, msg) {
+  var sb = document.getElementById('stateBox');
+  sb.classList.remove('hidden');
+  sb.className = 'state-box' + (type === 'error' ? ' state-error' : '');
+  sb.innerHTML = '<div class="icon">' + (type === 'loading' ? '...' : type === 'error' ? 'X' : 'o') + '</div><div>' + msg + '</div>';
+}
+function hideState() { document.getElementById('stateBox').classList.add('hidden'); }
 
-  const tbody =
-  document.querySelector(
-    '#table-rack tbody'
-  );
+// Auto uppercase
+document.getElementById('storeId').addEventListener('input', function() {
+  var pos = this.selectionStart;
+  this.value = this.value.toUpperCase();
+  this.setSelectionRange(pos, pos);
+});
+document.getElementById('filterRak').addEventListener('input', function() {
+  var pos = this.selectionStart;
+  this.value = this.value.toUpperCase();
+  this.setSelectionRange(pos, pos);
+});
+document.getElementById('filterRakTable').addEventListener('input', function() {
+  var pos = this.selectionStart;
+  this.value = this.value.toUpperCase();
+  this.setSelectionRange(pos, pos);
+  renderTable();
+});
 
-  tbody.innerHTML = '';
+// Enter key
+['storeId','filterRak'].forEach(function(id) {
+  document.getElementById(id).addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('fetchBtn').click();
+  });
+});
 
-  document
-  .getElementById('loading')
-  .style.display = 'block';
+document.getElementById('fetchBtn').addEventListener('click', function() {
+  var storeId = document.getElementById('storeId').value.trim().toUpperCase();
+  var filterRak = document.getElementById('filterRak').value.trim().toUpperCase();
+  if (!storeId) { setState('error', 'Kode toko wajib diisi!'); return; }
 
-  const storeId =
-  document
-  .getElementById('storeId')
-  .value
-  .trim();
+  var btn = document.getElementById('fetchBtn');
+  btn.disabled = true; btn.textContent = 'Memuat...';
+  document.getElementById('statsEl').classList.add('hidden');
+  document.getElementById('tableCard').classList.add('hidden');
+  setState('loading', 'Mengambil data produk...');
 
-  const rack =
-  document
-  .getElementById('rack')
-  .value
-  .trim();
+  fetch('/proxy-products?storeId=' + encodeURIComponent(storeId))
+  .then(function(r) { if (!r.ok) throw new Error('Server error: ' + r.status); return r.json(); })
+  .then(function(data) {
+    if (!Array.isArray(data) || !data.length) throw new Error('Data tidak ditemukan untuk toko ' + storeId);
 
-  if(!storeId || !rack){
-
-    alert(
-      'Kode toko & rack wajib diisi'
-    );
-
-    return;
-
-  }
-
-  try{
-
-    const res =
-    await fetch(
-
-      `/api/rack?storeId=${storeId}&rack=${rack}`
-
-    );
-
-   const text =
-await res.text();
-
-console.log(text);
-
-let items = [];
-
-try{
-
-  items =
-  JSON.parse(text);
-
-}catch{
-
-  alert('Response bukan JSON');
-
-  return;
-
-    if(items.length === 0){
-
-      tbody.innerHTML = `
-
-        <tr>
-          <td colspan="5">
-            Data tidak ditemukan
-          </td>
-        </tr>
-
-      `;
-
-      return;
-
+    // Filter rak jika diisi
+    if (filterRak) {
+      data = data.filter(function(item) {
+        return item.planogram && item.planogram.toUpperCase().indexOf(filterRak) === 0;
+      });
+      if (!data.length) throw new Error('Tidak ada item untuk rak ' + filterRak);
     }
 
-    items.forEach(item=>{
+    allData = data;
 
-      const tr =
-      document.createElement('tr');
-
-      tr.innerHTML = `
-
-        <td>
-          ${item.plu || '-'}
-        </td>
-
-        <td>
-          ${item.description || item.desc || '-'}
-        </td>
-
-        <td>
-          ${item.rack || rack}
-        </td>
-
-        <td class="numeric">
-          ${item.oh || item.stock || 0}
-        </td>
-
-        <td class="numeric">
-          ${Number(item.price || 0)
-            .toLocaleString('id-ID')}
-        </td>
-
-      `;
-
-      tbody.appendChild(tr);
-
+    // Stats
+    var racks = {}, subdepts = {};
+    data.forEach(function(item) {
+      var rack = item.planogram ? item.planogram.split('-')[0] : '0';
+      if (rack !== '0') racks[rack] = 1;
+      subdepts[item.subdept] = 1;
     });
 
-  }catch(err){
+    hideState();
+    document.getElementById('statsEl').classList.remove('hidden');
+    document.getElementById('tableCard').classList.remove('hidden');
+    document.getElementById('s-store').textContent = storeId;
+    document.getElementById('s-total').textContent = data.length.toLocaleString('id-ID');
+    document.getElementById('s-rak').textContent = Object.keys(racks).length;
+    document.getElementById('s-subdept').textContent = Object.keys(subdepts).length;
 
-    console.error(err);
+    // Sync filter rak ke toolbar
+    document.getElementById('filterRakTable').value = filterRak;
+    renderTable();
+  })
+  .catch(function(e) { setState('error', e.message); })
+  .finally(function() { btn.disabled = false; btn.textContent = 'Tampilkan'; });
+});
 
-    alert('Gagal ambil data');
+function renderTable() {
+  var q = document.getElementById('search').value.toLowerCase();
+  var rakFilter = document.getElementById('filterRakTable').value.trim().toUpperCase();
 
+  var filtered = allData.filter(function(r) {
+    var matchSearch = !q || r.descp.toLowerCase().indexOf(q) > -1 ||
+      String(r.plu).indexOf(q) > -1 || String(r.barcode).indexOf(q) > -1;
+    var matchRak = !rakFilter || (r.planogram && r.planogram.toUpperCase().indexOf(rakFilter) === 0);
+    return matchSearch && matchRak;
+  });
+
+  var sorted = filtered.slice().sort(function(a, b) {
+    var av = a[sortKey], bv = b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+
+  var tbody = document.getElementById('tbody');
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#555">Tidak ada data</td></tr>';
+    return;
   }
 
-  document
-  .getElementById('loading')
-  .style.display = 'none';
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var r = sorted[i];
+    var rack = r.planogram && r.planogram !== '0' ? r.planogram.split('-')[0] : '-';
+    var barcode = r.barcode && r.barcode !== 0 ? Math.round(r.barcode) : '-';
+    html += '<tr>' +
+      '<td class="mono">' + Math.round(r.plu) + '</td>' +
+      '<td title="' + r.descp + '">' + r.descp + '</td>' +
+      '<td class="rack" title="' + r.planogram + '">' + r.planogram + '</td>' +
+      '<td class="mono">' + barcode + '</td>' +
+      '<td class="right">' + r.subdept + '</td>' +
+    '</tr>';
+  }
+  tbody.innerHTML = html;
 
+  var racks = {};
+  sorted.forEach(function(r) {
+    var rack = r.planogram ? r.planogram.split('-')[0] : '0';
+    if (rack !== '0') racks[rack] = 1;
+  });
+
+  document.getElementById('footerInfo').textContent = sorted.length + ' dari ' + allData.length + ' item';
+  document.getElementById('footerRak').textContent = Object.keys(racks).length + ' rak';
+
+  ['plu','descp','planogram','barcode','subdept'].forEach(function(k) {
+    var el = document.getElementById('th-' + k);
+    if (el) el.className = k === sortKey ? 'active' : '';
+  });
 }
 
-</script>
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = 1; }
+  renderTable();
+}
 
+document.getElementById('search').addEventListener('input', renderTable);
+
+document.getElementById('exportBtn').addEventListener('click', function() {
+  if (!allData.length) return;
+  var storeId = document.getElementById('storeId').value.trim();
+  var ws = XLSX.utils.json_to_sheet(allData.map(function(r) {
+    return {
+      PLU: Math.round(r.plu),
+      'Nama Barang': r.descp,
+      Planogram: r.planogram,
+      Rak: r.planogram && r.planogram !== '0' ? r.planogram.split('-')[0] : '-',
+      Barcode: r.barcode && r.barcode !== 0 ? Math.round(r.barcode) : '',
+      Subdept: r.subdept
+    };
+  }));
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Planogram');
+  XLSX.writeFile(wb, 'Planogram_' + storeId + '.xlsx');
+});
+</script>
 </body>
 </html>
-```
-
----
-
-# api/rack.js
-
-```js
-export default async function handler(req,res){
-
-  const {
-    storeId,
-    rack
-  } = req.query;
-
-  const url =
-  `https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId=${storeId}&rack=${rack}`;
-
-  try{
-
-    const response =
-    await fetch(url);
-
-    const data =
-    await response.json();
-
-    res.status(200).json(data);
-
-  }catch(err){
-
-    res.status(500).json({
-      error:'Gagal fetch API'
-    });
-
-  }
-
-}
-```
-
----
-
-# vercel.json
-
-```json
-{
-  "routes": [
-    {
-      "src": "/api/rack",
-      "dest": "/api/rack.js"
-    }
-  ]
-}
-```
