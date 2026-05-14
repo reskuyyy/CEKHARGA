@@ -3,172 +3,160 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planogram Viewer v2</title>
+<title>Planogram Viewer - Fixed Price</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;
-  --border:#2a2a2a;--border2:#333;--text:#e8e8e8;--text2:#888;--text3:#555;
-  --accent:#ff4e1a;--green:#22c55e;--yellow:#f59e0b;
+  --border:#2a2a2a;--text:#e8e8e8;--text2:#888;
+  --accent:#ff4e1a;--yellow:#f59e0b;--red:#ef4444;
   --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
-.top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;height:56px;gap:12px;position:sticky;top:0;z-index:10;}
-.logo-dot{width:8px;height:8px;background:var(--accent);border-radius:50%;}
-.container{max-width:1100px;margin:0 auto;padding:24px;}
-.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px;}
-.form-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;}
-.field label{display:block;font-size:11px;color:var(--text2);font-family:var(--mono);margin-bottom:6px;text-transform:uppercase;}
-.field input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--mono);outline:none;}
-.field input:focus{border-color:var(--accent);}
-.btn-fetch{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 24px;font-weight:600;cursor:pointer;height:38px;}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
-.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
-.stat-val{font-size:20px;font-weight:700;}
-.table-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.table-toolbar{display:flex;justify-content:space-between;padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);}
-.search-input{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--text);width:220px;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);padding-bottom:50px;}
+.top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:15px 25px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.dot{width:10px;height:10px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px var(--accent);}
+.container{max-width:1100px;margin:25px auto;padding:0 20px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:25px;margin-bottom:20px;}
+.input-group{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:end;}
+label{display:block;font-size:10px;color:var(--text2);font-family:var(--mono);margin-bottom:8px;letter-spacing:1px;}
+input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:#fff;font-family:var(--mono);outline:none;}
+input:focus{border-color:var(--accent);}
+.btn{background:var(--accent);color:#fff;border:none;padding:12px 25px;border-radius:8px;font-weight:700;cursor:pointer;transition:0.3s;}
+.btn:hover{opacity:0.8;}
+.btn:disabled{background:#333;cursor:not-allowed;}
+.table-container{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.toolbar{padding:15px;background:var(--bg3);display:flex;justify-content:space-between;align-items:center;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{background:var(--bg3);color:var(--text3);font-family:var(--mono);font-size:10px;padding:10px 12px;text-align:left;cursor:pointer;position:sticky;top:0;}
-thead th.active{color:var(--accent);}
-td{padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
-td.rack{color:var(--accent);font-family:var(--mono);font-size:11px;}
-td.price{color:var(--yellow);font-family:var(--mono);font-weight:600;text-align:right;}
-.hidden{display:none;}
+th{text-align:left;padding:12px;background:var(--bg3);color:var(--text2);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+td{padding:12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.price-tag{color:var(--yellow);font-family:var(--mono);font-weight:700;text-align:right;}
+.rack-tag{color:var(--accent);font-family:var(--mono);font-weight:600;}
+.status-msg{text-align:center;padding:50px;color:var(--text2);font-family:var(--mono);}
+.error{color:var(--red);}
 </style>
 </head>
 <body>
+
 <div class="top-bar">
-  <div class="logo-dot"></div>
-  <div class="logo-text">Planogram Viewer <span style="font-size:10px; color:var(--text3)">API FIXED</span></div>
+    <div class="dot"></div>
+    <div style="font-weight:700; font-size:16px;">Planogram Viewer</div>
 </div>
+
 <div class="container">
-  <div class="form-card">
-    <div class="form-row">
-      <div class="field">
-        <label>KODE TOKO</label>
-        <input type="text" id="storeId" value="N497">
-      </div>
-      <div class="field">
-        <label>RAK</label>
-        <input type="text" id="filterRak" value="AU1">
-      </div>
-      <button class="btn-fetch" id="fetchBtn">Tampilkan</button>
+    <div class="card">
+        <div class="input-group">
+            <div>
+                <label>KODE TOKO</label>
+                <input type="text" id="storeId" placeholder="Contoh: N497" value="N497">
+            </div>
+            <div>
+                <label>FILTER RAK (JA1, AU1, dll)</label>
+                <input type="text" id="rack" placeholder="Kosongkan untuk semua" value="JA1">
+            </div>
+            <button class="btn" id="fetchBtn">Tampilkan</button>
+        </div>
     </div>
-  </div>
 
-  <div id="statsEl" class="stats hidden">
-    <div class="stat-card">
-        <div style="font-size:10px;color:var(--text3)">STORE</div>
-        <div class="stat-val" id="s-store" style="color:var(--accent)">-</div>
+    <div id="mainView" class="hidden">
+        <div class="table-container">
+            <div class="toolbar">
+                <input type="text" id="search" placeholder="Cari PLU atau Nama..." style="width:250px; padding:8px;">
+                <button onclick="exportExcel()" style="background:none; border:1px solid var(--border); color:var(--text2); padding:8px 15px; border-radius:6px; cursor:pointer;">Export Excel</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>PLU</th>
+                            <th>NAMA BARANG</th>
+                            <th>RAK</th>
+                            <th>BARCODE</th>
+                            <th style="text-align:right">HARGA (SALE)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-        <div style="font-size:10px;color:var(--text3)">TOTAL ITEM</div>
-        <div class="stat-val" id="s-total">-</div>
-    </div>
-  </div>
 
-  <div id="tableCard" class="table-card hidden">
-    <div class="table-toolbar">
-      <input type="text" class="search-input" id="search" placeholder="Cari barang...">
-      <button id="exportBtn" style="background:none; border:1px solid var(--border2); color:var(--text2); cursor:pointer; padding:5px 10px; border-radius:5px">Export Excel</button>
+    <div id="status" class="status-msg">
+        Masukkan Kode Toko dan klik Tampilkan.
     </div>
-    <div style="overflow-x:auto; max-height:500px;">
-      <table>
-        <thead>
-          <tr>
-            <th onclick="sortBy('plu')" id="th-plu">PLU</th>
-            <th onclick="sortBy('descp')" id="th-descp">NAMA BARANG</th>
-            <th onclick="sortBy('planogram')" id="th-planogram">PLANOGRAM</th>
-            <th onclick="sortBy('barcode')" id="th-barcode">BARCODE</th>
-            <th onclick="sortBy('price')" id="th-price" style="text-align:right">PRICE</th>
-            <th style="text-align:right">SUBDEPT</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
-    </div>
-  </div>
 </div>
 
 <script>
-let allData = [], sortKey = 'planogram', sortDir = 1;
-const formatter = new Intl.NumberFormat('id-ID');
+let allData = [];
+const fmt = new Intl.NumberFormat('id-ID');
 
-document.getElementById('fetchBtn').onclick = async function() {
-    const storeId = document.getElementById('storeId').value.toUpperCase();
-    const rack = document.getElementById('filterRak').value.toUpperCase();
-    this.textContent = 'Memuat...';
-    
+async function fetchData() {
+    const sId = document.getElementById('storeId').value.trim().toUpperCase();
+    const rak = document.getElementById('rack').value.trim().toUpperCase();
+    const btn = document.getElementById('fetchBtn');
+    const status = document.getElementById('status');
+    const mainView = document.getElementById('mainView');
+
+    if(!sId) return alert("Isi Kode Toko!");
+
+    btn.disabled = true;
+    btn.textContent = "Loading...";
+    status.innerHTML = "Sedang mengambil data...";
+    mainView.style.display = "none";
+
     try {
-        const r = await fetch(`/proxy-products?storeId=${storeId}&rack=${rack}`);
-        const data = await r.json();
-        
-        allData = Array.isArray(data) ? data : [];
-        if(allData.length === 0) alert('Data tidak ditemukan');
+        const resp = await fetch(`/proxy-products?storeId=${sId}&rack=${rak}`);
+        const data = await resp.json();
 
-        document.getElementById('statsEl').classList.remove('hidden');
-        document.getElementById('tableCard').classList.remove('hidden');
-        document.getElementById('s-store').textContent = storeId;
-        document.getElementById('s-total').textContent = allData.length;
-        
-        renderTable();
+        // Cek apakah data valid (bisa berupa list langsung atau objek dengan data di dalamnya)
+        allData = Array.isArray(data) ? data : (data.data || []);
+
+        if(allData.length === 0) {
+            status.innerHTML = `<span class="error">X<br>Data tidak ditemukan untuk toko ${sId} di rak ${rak || 'semua'}</span>`;
+        } else {
+            status.style.display = "none";
+            mainView.style.display = "block";
+            renderTable();
+        }
     } catch (e) {
-        alert('Gagal mengambil data: ' + e.message);
+        status.innerHTML = `<span class="error">Terjadi Kesalahan: ${e.message}</span>`;
     } finally {
-        this.textContent = 'Tampilkan';
+        btn.disabled = false;
+        btn.textContent = "Tampilkan";
     }
-};
+}
 
 function renderTable() {
     const q = document.getElementById('search').value.toLowerCase();
     const tbody = document.getElementById('tbody');
     
-    let filtered = allData.filter(item => 
-        item.descp.toLowerCase().includes(q) || item.plu.toString().includes(q)
+    const filtered = allData.filter(i => 
+        (i.descp || "").toLowerCase().includes(q) || 
+        (i.plu || "").toString().includes(q)
     );
 
-    filtered.sort((a, b) => {
-        let valA = a[sortKey], valB = b[sortKey];
-        return (valA < valB ? -1 : 1) * sortDir;
-    });
-
-    tbody.innerHTML = filtered.map(r => `
+    tbody.innerHTML = filtered.map(item => `
         <tr>
-            <td style="font-family:var(--mono)">${Math.round(r.plu)}</td>
-            <td>${r.descp}</td>
-            <td class="rack">${r.planogram || '-'}</td>
-            <td style="font-family:var(--mono)">${r.barcode || '-'}</td>
-            <td class="price">${formatter.format(r.price || 0)}</td>
-            <td style="text-align:right; font-family:var(--mono)">${r.subdept}</td>
+            <td style="font-family:var(--mono)">${Math.round(item.plu)}</td>
+            <td title="${item.descp}">${item.descp}</td>
+            <td class="rack-tag">${item.planogram || item.rack || '-'}</td>
+            <td style="font-family:var(--mono); color:var(--text2)">${item.barcode || '-'}</td>
+            <td class="price-tag">${fmt.format(item.price || item.price_sale || 0)}</td>
         </tr>
     `).join('');
-
-    // Update Header sorting active class
-    ['plu','descp','planogram','barcode','price'].forEach(k => {
-        const el = document.getElementById('th-' + k);
-        if(el) el.className = k === sortKey ? 'active' : '';
-    });
 }
 
-function sortBy(key) {
-    if (sortKey === key) sortDir *= -1;
-    else { sortKey = key; sortDir = 1; }
-    renderTable();
-}
-
-document.getElementById('search').oninput = renderTable;
-
-document.getElementById('exportBtn').onclick = function() {
-    const ws = XLSX.utils.json_to_sheet(allData.map(r => ({
-        PLU: r.plu, Barang: r.descp, Rak: r.planogram, Harga: r.price
-    })));
+function exportExcel() {
+    const ws = XLSX.utils.json_to_sheet(allData);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Data");
-    XLSX.writeFile(wb, "Planogram.xlsx");
-};
+    XLSX.utils.book_append_sheet(wb, ws, "Planogram");
+    XLSX.writeFile(wb, `Planogram_${document.getElementById('storeId').value}.xlsx`);
+}
+
+document.getElementById('fetchBtn').onclick = fetchData;
+document.getElementById('search').oninput = renderTable;
 </script>
+
 </body>
 </html>
