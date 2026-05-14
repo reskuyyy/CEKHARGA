@@ -1,7 +1,6 @@
 from flask import Flask, request, Response
 from flask_cors import CORS
 import requests
-import os
 
 application = Flask(__name__)
 CORS(application)
@@ -16,10 +15,6 @@ def proxy_products():
     store_id = request.args.get('storeId', '').upper()
     rack = request.args.get('rack', '').upper()
     
-    if not store_id:
-        return {'error': 'storeId wajib diisi'}, 400
-    
-    # Logic: Jika rak diisi pakai API Tablet, jika kosong pakai API CEX
     if rack:
         url = f"https://app.alfastore.co.id/prd/api/mob/tablet/productinfo/CheckPerRack/?storeId={store_id}&rack={rack}"
     else:
@@ -32,5 +27,4 @@ def proxy_products():
         return {'error': str(e)}, 502
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
-    application.run(host='0.0.0.0', port=port)
+    application.run(host='0.0.0.0', port=8080)
