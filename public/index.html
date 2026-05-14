@@ -1,131 +1,47 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Planogram Viewer - Fixed Price</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<style>
-:root{
-  --bg:#0d0d0d;--bg2:#141414;--bg3:#1a1a1a;
-  --border:#2a2a2a;--text:#e8e8e8;--text2:#888;
-  --accent:#ff4e1a;--yellow:#f59e0b;--red:#ef4444;
-  --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
-}
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);padding-bottom:50px;}
-.top-bar{background:var(--bg2);border-bottom:1px solid var(--border);padding:15px 25px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
-.dot{width:10px;height:10px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px var(--accent);}
-.container{max-width:1100px;margin:25px auto;padding:0 20px;}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:25px;margin-bottom:20px;}
-.input-group{display:grid;grid-template-columns:1fr 1fr auto;gap:15px;align-items:end;}
-label{display:block;font-size:10px;color:var(--text2);font-family:var(--mono);margin-bottom:8px;letter-spacing:1px;}
-input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:#fff;font-family:var(--mono);outline:none;}
-input:focus{border-color:var(--accent);}
-.btn{background:var(--accent);color:#fff;border:none;padding:12px 25px;border-radius:8px;font-weight:700;cursor:pointer;transition:0.3s;}
-.btn:hover{opacity:0.8;}
-.btn:disabled{background:#333;cursor:not-allowed;}
-.table-container{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.toolbar{padding:15px;background:var(--bg3);display:flex;justify-content:space-between;align-items:center;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-th{text-align:left;padding:12px;background:var(--bg3);color:var(--text2);font-family:var(--mono);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);}
-td{padding:12px;border-bottom:1px solid var(--border);white-space:nowrap;}
-.price-tag{color:var(--yellow);font-family:var(--mono);font-weight:700;text-align:right;}
-.rack-tag{color:var(--accent);font-family:var(--mono);font-weight:600;}
-.status-msg{text-align:center;padding:50px;color:var(--text2);font-family:var(--mono);}
-.error{color:var(--red);}
-</style>
-</head>
-<body>
-
-<div class="top-bar">
-    <div class="dot"></div>
-    <div style="font-weight:700; font-size:16px;">Planogram Viewer</div>
-</div>
-
-<div class="container">
-    <div class="card">
-        <div class="input-group">
-            <div>
-                <label>KODE TOKO</label>
-                <input type="text" id="storeId" placeholder="Contoh: N497" value="N497">
-            </div>
-            <div>
-                <label>FILTER RAK (JA1, AU1, dll)</label>
-                <input type="text" id="rack" placeholder="Kosongkan untuk semua" value="JA1">
-            </div>
-            <button class="btn" id="fetchBtn">Tampilkan</button>
-        </div>
-    </div>
-
-    <div id="mainView" class="hidden">
-        <div class="table-container">
-            <div class="toolbar">
-                <input type="text" id="search" placeholder="Cari PLU atau Nama..." style="width:250px; padding:8px;">
-                <button onclick="exportExcel()" style="background:none; border:1px solid var(--border); color:var(--text2); padding:8px 15px; border-radius:6px; cursor:pointer;">Export Excel</button>
-            </div>
-            <div style="overflow-x:auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>PLU</th>
-                            <th>NAMA BARANG</th>
-                            <th>RAK</th>
-                            <th>BARCODE</th>
-                            <th style="text-align:right">HARGA (SALE)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="status" class="status-msg">
-        Masukkan Kode Toko dan klik Tampilkan.
-    </div>
-</div>
-
-<script>
 let allData = [];
 const fmt = new Intl.NumberFormat('id-ID');
 
-async function fetchData() {
+document.getElementById('fetchBtn').onclick = async function() {
     const sId = document.getElementById('storeId').value.trim().toUpperCase();
-    const rak = document.getElementById('rack').value.trim().toUpperCase();
-    const btn = document.getElementById('fetchBtn');
-    const status = document.getElementById('status');
-    const mainView = document.getElementById('mainView');
-
+    const rk = document.getElementById('filterRak').value.trim().toUpperCase();
+    
     if(!sId) return alert("Isi Kode Toko!");
 
-    btn.disabled = true;
-    btn.textContent = "Loading...";
-    status.innerHTML = "Sedang mengambil data...";
-    mainView.style.display = "none";
+    this.textContent = 'Memuat...';
+    this.disabled = true;
 
     try {
-        const resp = await fetch(`/proxy-products?storeId=${sId}&rack=${rak}`);
-        const data = await resp.json();
+        const response = await fetch(`/proxy-products?storeId=${sId}&rack=${rk}`);
+        const result = await response.json();
 
-        // Cek apakah data valid (bisa berupa list langsung atau objek dengan data di dalamnya)
-        allData = Array.isArray(data) ? data : (data.data || []);
-
-        if(allData.length === 0) {
-            status.innerHTML = `<span class="error">X<br>Data tidak ditemukan untuk toko ${sId} di rak ${rak || 'semua'}</span>`;
+        // LOGIKA DETEKSI DATA:
+        // Kadang API balikin [ {...} ], kadang { "data": [...] }
+        if (Array.isArray(result)) {
+            allData = result;
+        } else if (result.data && Array.isArray(result.data)) {
+            allData = result.data;
+        } else if (result.product_list && Array.isArray(result.product_list)) {
+            allData = result.product_list;
         } else {
-            status.style.display = "none";
-            mainView.style.display = "block";
+            allData = [];
+        }
+
+        if(allData.length > 0) {
+            document.getElementById('statsEl').classList.remove('hidden');
+            document.getElementById('tableCard').classList.remove('hidden');
+            document.getElementById('s-store').textContent = sId;
+            document.getElementById('s-total').textContent = allData.length;
             renderTable();
+        } else {
+            alert(`Data tidak ditemukan! Pastikan Kode Toko (${sId}) dan Rak (${rk}) sudah benar.`);
         }
     } catch (e) {
-        status.innerHTML = `<span class="error">Terjadi Kesalahan: ${e.message}</span>`;
+        alert("Error: " + e.message);
     } finally {
-        btn.disabled = false;
-        btn.textContent = "Tampilkan";
+        this.textContent = 'Tampilkan';
+        this.disabled = false;
     }
-}
+};
 
 function renderTable() {
     const q = document.getElementById('search').value.toLowerCase();
@@ -136,27 +52,19 @@ function renderTable() {
         (i.plu || "").toString().includes(q)
     );
 
-    tbody.innerHTML = filtered.map(item => `
-        <tr>
-            <td style="font-family:var(--mono)">${Math.round(item.plu)}</td>
-            <td title="${item.descp}">${item.descp}</td>
-            <td class="rack-tag">${item.planogram || item.rack || '-'}</td>
-            <td style="font-family:var(--mono); color:var(--text2)">${item.barcode || '-'}</td>
-            <td class="price-tag">${fmt.format(item.price || item.price_sale || 0)}</td>
-        </tr>
-    `).join('');
+    tbody.innerHTML = filtered.map(item => {
+        // Ambil harga dari berbagai kemungkinan nama field
+        const harga = item.price || item.price_sale || item.salesPrice || 0;
+        
+        return `
+            <tr>
+                <td style="font-family:monospace">${Math.round(item.plu || 0)}</td>
+                <td>${item.descp || '-'}</td>
+                <td style="color:#ff4e1a; font-weight:bold">${item.planogram || item.rack || rk || '-'}</td>
+                <td>${item.barcode || '-'}</td>
+                <td style="color:#f59e0b; font-weight:bold; text-align:right">${fmt.format(harga)}</td>
+                <td style="text-align:right">${item.subdept || '-'}</td>
+            </tr>
+        `;
+    }).join('');
 }
-
-function exportExcel() {
-    const ws = XLSX.utils.json_to_sheet(allData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Planogram");
-    XLSX.writeFile(wb, `Planogram_${document.getElementById('storeId').value}.xlsx`);
-}
-
-document.getElementById('fetchBtn').onclick = fetchData;
-document.getElementById('search').oninput = renderTable;
-</script>
-
-</body>
-</html>
