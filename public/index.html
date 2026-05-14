@@ -56,6 +56,7 @@ tr:last-child td{border-bottom:none;}
 tr:hover td{background:var(--bg3);}
 td.mono{font-family:var(--mono);font-size:11px;color:var(--text2);}
 td.rack{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:600;}
+td.price{font-family:var(--mono);font-size:12px;color:var(--yellow);font-weight:600;}
 td.right{text-align:right;font-family:var(--mono);}
 .table-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;font-family:var(--mono);color:var(--text3);background:var(--bg3);display:flex;justify-content:space-between;}
 .state-box{padding:48px;text-align:center;color:var(--text3);font-family:var(--mono);font-size:13px;}
@@ -116,6 +117,7 @@ td.right{text-align:right;font-family:var(--mono);}
             <th onclick="sortBy('descp')" id="th-descp">Nama Barang</th>
             <th onclick="sortBy('planogram')" id="th-planogram">Planogram / Rak</th>
             <th onclick="sortBy('barcode')" id="th-barcode">Barcode</th>
+            <th onclick="sortBy('price_sale')" id="th-price_sale">Price</th>
             <th onclick="sortBy('subdept')" id="th-subdept" style="text-align:right">Subdept</th>
           </tr>
         </thead>
@@ -137,6 +139,9 @@ td.right{text-align:right;font-family:var(--mono);}
 <script>
 var allData = [], sortKey = 'planogram', sortDir = 1;
 
+// IDR Formatter
+const formatter = new Intl.NumberFormat('id-ID');
+
 function setState(type, msg) {
   var sb = document.getElementById('stateBox');
   sb.classList.remove('hidden');
@@ -145,22 +150,14 @@ function setState(type, msg) {
 }
 function hideState() { document.getElementById('stateBox').classList.add('hidden'); }
 
-// Auto uppercase
-document.getElementById('storeId').addEventListener('input', function() {
-  var pos = this.selectionStart;
-  this.value = this.value.toUpperCase();
-  this.setSelectionRange(pos, pos);
-});
-document.getElementById('filterRak').addEventListener('input', function() {
-  var pos = this.selectionStart;
-  this.value = this.value.toUpperCase();
-  this.setSelectionRange(pos, pos);
-});
-document.getElementById('filterRakTable').addEventListener('input', function() {
-  var pos = this.selectionStart;
-  this.value = this.value.toUpperCase();
-  this.setSelectionRange(pos, pos);
-  renderTable();
+// Auto uppercase logic
+['storeId','filterRak','filterRakTable'].forEach(id => {
+    document.getElementById(id).addEventListener('input', function() {
+        var pos = this.selectionStart;
+        this.value = this.value.toUpperCase();
+        this.setSelectionRange(pos, pos);
+        if(id === 'filterRakTable') renderTable();
+    });
 });
 
 // Enter key
@@ -186,7 +183,6 @@ document.getElementById('fetchBtn').addEventListener('click', function() {
   .then(function(data) {
     if (!Array.isArray(data) || !data.length) throw new Error('Data tidak ditemukan untuk toko ' + storeId);
 
-    // Filter rak jika diisi
     if (filterRak) {
       data = data.filter(function(item) {
         return item.planogram && item.planogram.toUpperCase().indexOf(filterRak) === 0;
@@ -196,7 +192,6 @@ document.getElementById('fetchBtn').addEventListener('click', function() {
 
     allData = data;
 
-    // Stats
     var racks = {}, subdepts = {};
     data.forEach(function(item) {
       var rack = item.planogram ? item.planogram.split('-')[0] : '0';
@@ -212,7 +207,6 @@ document.getElementById('fetchBtn').addEventListener('click', function() {
     document.getElementById('s-rak').textContent = Object.keys(racks).length;
     document.getElementById('s-subdept').textContent = Object.keys(subdepts).length;
 
-    // Sync filter rak ke toolbar
     document.getElementById('filterRakTable').value = filterRak;
     renderTable();
   })
@@ -239,20 +233,22 @@ function renderTable() {
 
   var tbody = document.getElementById('tbody');
   if (!sorted.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:32px;color:#555">Tidak ada data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#555">Tidak ada data</td></tr>';
     return;
   }
 
   var html = '';
   for (var i = 0; i < sorted.length; i++) {
     var r = sorted[i];
-    var rack = r.planogram && r.planogram !== '0' ? r.planogram.split('-')[0] : '-';
     var barcode = r.barcode && r.barcode !== 0 ? Math.round(r.barcode) : '-';
+    var formattedPrice = r.price_sale ? formatter.format(r.price_sale) : '0';
+
     html += '<tr>' +
       '<td class="mono">' + Math.round(r.plu) + '</td>' +
       '<td title="' + r.descp + '">' + r.descp + '</td>' +
       '<td class="rack" title="' + r.planogram + '">' + r.planogram + '</td>' +
       '<td class="mono">' + barcode + '</td>' +
+      '<td class="price">' + formattedPrice + '</td>' +
       '<td class="right">' + r.subdept + '</td>' +
     '</tr>';
   }
@@ -267,7 +263,7 @@ function renderTable() {
   document.getElementById('footerInfo').textContent = sorted.length + ' dari ' + allData.length + ' item';
   document.getElementById('footerRak').textContent = Object.keys(racks).length + ' rak';
 
-  ['plu','descp','planogram','barcode','subdept'].forEach(function(k) {
+  ['plu','descp','planogram','barcode','price_sale','subdept'].forEach(function(k) {
     var el = document.getElementById('th-' + k);
     if (el) el.className = k === sortKey ? 'active' : '';
   });
@@ -291,6 +287,7 @@ document.getElementById('exportBtn').addEventListener('click', function() {
       Planogram: r.planogram,
       Rak: r.planogram && r.planogram !== '0' ? r.planogram.split('-')[0] : '-',
       Barcode: r.barcode && r.barcode !== 0 ? Math.round(r.barcode) : '',
+      'Price Sale': r.price_sale || 0,
       Subdept: r.subdept
     };
   }));
