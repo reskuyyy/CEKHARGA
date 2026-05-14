@@ -110,45 +110,44 @@
         }
     };
 
-    function renderTable() {
-        const q = document.getElementById('search').value.toLowerCase();
-        const tbody = document.getElementById('tbody');
+   function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const tbody = document.getElementById('tbody');
+    
+    const filtered = allData.filter(i => 
+        (i.descp || "").toLowerCase().includes(q) || 
+        (i.plu || i.plu_code || "").toString().includes(q)
+    );
+
+    tbody.innerHTML = filtered.map(item => {
+        // Ambil PLU & Barcode (Sudah benar di screenshot kamu)
+        const plu = item.plu || item.plu_code || "-";
+        const barcode = item.barcode || item.bar_code || "-";
+        const rak = item.planogram || item.rack || item.rack_id || "-";
         
-        const filtered = allData.filter(i => 
-            (i.descp || "").toLowerCase().includes(q) || 
-            (i.plu || i.plu_code || "").toString().includes(q)
-        );
-
-        tbody.innerHTML = filtered.map(item => {
-            // DETEKSI PLU
-            const plu = item.plu || item.plu_code || item.PLU || "-";
-            
-            // DETEKSI RAK
-            const rak = item.planogram || item.rack || item.rack_id || "-";
-            
-            // DETEKSI BARCODE
-            const barcode = item.barcode || item.bar_code || item.BARCODE || "-";
-            
-            // DETEKSI HARGA (Mencari semua kemungkinan kata kunci harga dari API Alfamart)
-            const hargaRaw = item.price_sell || 
-                             item.price_sale || 
-                             item.price || 
-                             item.sales_price || 
-                             item.price_net || 
-                             item.sell_price ||
-                             item.priceSell || 0;
-
-            return `
-                <tr>
-                    <td style="font-family:var(--mono)">${plu}</td>
-                    <td title="${item.descp}">${item.descp || '-'}</td>
-                    <td class="rack-tag">${rak}</td>
-                    <td style="font-family:var(--mono); color:var(--text2)">${barcode}</td>
-                    <td class="price-tag">${fmt.format(hargaRaw)}</td>
-                </tr>
-            `;
-        }).join('');
-    }
+        // --- LOGIKA PENYELAMAT HARGA ---
+        // Kita cek semua kemungkinan field harga yang ada di API Alfamart
+        let hargaRaw = 0;
+        
+        if (item.price && item.price != 0) hargaRaw = item.price;
+        else if (item.price_sell && item.price_sell != 0) hargaRaw = item.price_sell;
+        else if (item.price_sale && item.price_sale != 0) hargaRaw = item.price_sale;
+        else if (item.salesPrice && item.salesPrice != 0) hargaRaw = item.salesPrice;
+        else if (item.member_price && item.member_price != 0) hargaRaw = item.member_price;
+        
+        return `
+            <tr>
+                <td>${plu}</td>
+                <td>${item.descp || '-'}</td>
+                <td style="color:#ff4e1a; font-weight:bold;">${rak}</td>
+                <td>${barcode}</td>
+                <td style="color:#f59e0b; font-weight:bold; text-align:right;">
+                    ${hargaRaw > 0 ? fmt.format(hargaRaw) : '<span style="color:#444">N/A</span>'}
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
     document.getElementById('search').oninput = renderTable;
 
